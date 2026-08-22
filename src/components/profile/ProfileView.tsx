@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Employee } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { useHRData } from '../../context/HRDataContext';
 import { Badge } from '../common/Badge';
 import { DocumentManager } from './DocumentManager';
 import { EditProfileModal } from './EditProfileModal';
@@ -20,7 +21,9 @@ import {
   Clock, 
   CheckCircle2, 
   AlertCircle,
-  Download
+  Download,
+  Camera,
+  Upload
 } from 'lucide-react';
 
 interface ProfileViewProps {
@@ -30,8 +33,32 @@ interface ProfileViewProps {
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ employee, isSelf = false }) => {
   const { isAdmin } = useAuth();
+  const { updateEmployee } = useHRData();
   const [activeTab, setActiveTab] = useState<'job' | 'salary' | 'docs' | 'emergency'>('job');
   const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleQuickAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+      alert('Please upload a JPEG or PNG image.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be under 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      updateEmployee(employee.id, { avatar: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const tabs = [
     { id: 'job', label: 'Job & Overview', icon: Briefcase },
@@ -42,6 +69,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ employee, isSelf = fal
 
   return (
     <div className="space-y-6">
+      {/* Hidden file input for quick photo update */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleQuickAvatarChange}
+        accept="image/jpeg,image/png,image/jpg,image/webp"
+        className="hidden"
+      />
+
       {/* Profile Header Hero Card */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden">
         {/* Banner with subtle geometric gradient */}
@@ -53,14 +89,26 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ employee, isSelf = fal
         <div className="px-6 sm:px-8 pb-6 pt-0 relative">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-16 sm:-mt-14 mb-4">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <div className="relative">
+              <div className="relative group">
                 <img
                   src={employee.avatar}
                   alt={employee.name}
                   className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl object-cover ring-4 ring-white dark:ring-slate-900 shadow-xl"
                 />
+                
+                {/* 1-Click Quick Camera Upload Button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/40 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer shadow-inner"
+                  title="Upload New JPEG / PNG Profile Photo"
+                >
+                  <Camera className="w-6 h-6 mb-1 drop-shadow-md" />
+                  <span className="text-[10px] font-bold tracking-tight uppercase">Change</span>
+                </button>
+
                 {employee.isEmailVerified && (
-                  <span className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 text-white rounded-full ring-2 ring-white dark:ring-slate-900" title="Verified Employee">
+                  <span className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 text-white rounded-full ring-2 ring-white dark:ring-slate-900 shadow-sm" title="Verified Employee">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </span>
                 )}
@@ -76,9 +124,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ employee, isSelf = fal
                 <p className="text-xs sm:text-sm font-semibold text-odoo-700 dark:text-odoo-400 mt-0.5">
                   {employee.designation} • {employee.department}
                 </p>
-                <p className="text-xs text-slate-400 font-mono mt-0.5">
-                  ID: {employee.employeeId}
-                </p>
+                <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                  <span className="font-mono">ID: {employee.employeeId}</span>
+                  <span>•</span>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-odoo-700 dark:text-odoo-400 hover:underline font-semibold flex items-center gap-1"
+                  >
+                    <Upload className="w-3 h-3" />
+                    <span>Upload photo</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -174,8 +230,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ employee, isSelf = fal
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
                   <span className="text-[11px] text-slate-400 block font-medium">Employment Type</span>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white mt-1 flex items-center gap-1.5">
-                    <Briefcase className="w-3.5 h-3.5 text-teal-600" />
+                  <span className="text-xs font-bold text-teal-600 mt-1 flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5" />
                     {employee.employmentType}
                   </span>
                 </div>

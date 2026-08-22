@@ -29,7 +29,7 @@ router.post('/login', async (req: Request, res: Response) => {
 // Signup
 router.post('/signup', async (req: Request, res: Response) => {
   try {
-    const { employeeId, name, email, role, department } = req.body;
+    const { employeeId, name, email, role, department, avatar } = req.body;
 
     if (!employeeId || !name || !email) {
       return res.status(400).json({ success: false, message: 'Employee ID, Name, and Email are required' });
@@ -45,6 +45,10 @@ router.post('/signup', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Employee ID is already registered' });
     }
 
+    const defaultAvatar = role === 'ADMIN_HR'
+      ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=250'
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=250';
+
     const newEmployee = new EmployeeModel({
       employeeId: employeeId.toUpperCase(),
       name,
@@ -53,9 +57,7 @@ router.post('/signup', async (req: Request, res: Response) => {
       department: department || 'Engineering',
       designation: role === 'ADMIN_HR' ? 'HR Specialist' : 'Associate Engineer',
       isEmailVerified: false,
-      avatar: role === 'ADMIN_HR'
-        ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=250'
-        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=250'
+      avatar: avatar || defaultAvatar
     });
 
     await newEmployee.save();

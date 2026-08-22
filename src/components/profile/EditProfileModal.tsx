@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Employee, EmploymentType, UserRole } from '../../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Employee, EmploymentType } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useHRData } from '../../context/HRDataContext';
 import { Modal } from '../common/Modal';
-import { Save, UserCheck, ShieldAlert, Image, Phone, MapPin, Briefcase, Building } from 'lucide-react';
+import { Save, Camera, Upload, X, AlertTriangle } from 'lucide-react';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -20,6 +20,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const { updateEmployee } = useHRData();
 
   const [formData, setFormData] = useState<Partial<Employee>>({});
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (employee) {
@@ -40,6 +42,28 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
   }, [employee]);
 
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+      setError('Please select a valid image file (JPEG or PNG format).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file size cannot exceed 5MB.');
+      return;
+    }
+
+    setError(null);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, avatar: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!employee) return;
@@ -54,35 +78,78 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={isAdmin ? `Edit Profile (Admin Control)` : 'Edit My Personal Details'}
-      subtitle={isAdmin ? `Modifying profile for ${employee.name} (${employee.employeeId})` : 'Update your personal contact information'}
+      subtitle={isAdmin ? `Modifying profile for ${employee.name} (${employee.employeeId})` : 'Update your personal contact information and profile picture'}
       maxWidth="2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
         {!isAdmin && (
           <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-xl text-xs text-blue-800 dark:text-blue-200">
-            <span className="font-bold">Note for Employees:</span> You can update your contact information, address, emergency contact, bio, and avatar. Core job role and compensation changes require HR Administrator authorization.
+            <span className="font-bold">Note for Employees:</span> You can update your profile photo, phone number, address, emergency contact, bio, and personal details.
           </div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Avatar URL */}
-          <div className="col-span-full">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Profile Photo URL
+          {/* Profile Photo Upload Section */}
+          <div className="col-span-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Profile Photo (Upload JPEG / PNG)
             </label>
-            <div className="flex items-center gap-3">
-              <img
-                src={formData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-                alt="Preview"
-                className="w-10 h-10 rounded-full object-cover ring-2 ring-odoo-700/20"
-              />
-              <input
-                type="url"
-                value={formData.avatar || ''}
-                onChange={e => setFormData(prev => ({ ...prev, avatar: e.target.value }))}
-                placeholder="https://images.unsplash.com/..."
-                className="flex-1 px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-odoo-700/30"
-              />
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative group flex-shrink-0">
+                <img
+                  src={formData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'}
+                  alt="Avatar Preview"
+                  className="w-16 h-16 rounded-2xl object-cover ring-2 ring-odoo-700/30 shadow-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                  title="Upload image"
+                >
+                  <Camera className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 space-y-2 w-full text-center sm:text-left">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageFile}
+                  accept="image/jpeg,image/png,image/jpg,image/webp"
+                  className="hidden"
+                />
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-odoo-800 hover:bg-odoo-900 text-white text-xs font-bold shadow-xs transition-colors"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload New Photo (JPEG / PNG)</span>
+                  </button>
+                  {formData.avatar && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, avatar: '' }))}
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg text-xs font-medium transition-colors"
+                      title="Reset photo"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Select a JPG, JPEG, or PNG image from your computer to update your enterprise profile photo.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -136,7 +203,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             />
           </div>
 
-          {/* Designation (Admin Only) */}
+          {/* Designation */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Job Designation {!isAdmin && '(HR Controlled)'}
@@ -154,7 +221,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             />
           </div>
 
-          {/* Department (Admin Only) */}
+          {/* Department */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Department {!isAdmin && '(HR Controlled)'}
@@ -182,7 +249,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             )}
           </div>
 
-          {/* Employment Type (Admin Only) */}
+          {/* Employment Type */}
           {isAdmin && (
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">

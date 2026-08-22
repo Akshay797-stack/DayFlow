@@ -15,6 +15,7 @@ interface AuthContextType {
     role: UserRole;
     password?: string;
     department?: string;
+    avatar?: string;
   }) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   verifyEmail: () => void;
@@ -76,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role: UserRole;
     password?: string;
     department?: string;
+    avatar?: string;
   }): Promise<{ success: boolean; message?: string }> => {
     const employees = StorageService.getEmployees();
 
@@ -87,15 +89,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, message: 'Employee ID is already registered.' };
     }
 
+    const defaultAvatar = data.role === 'ADMIN_HR' 
+      ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=250&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=250&auto=format&fit=crop&q=80';
+
     const newEmp: Employee = {
       id: 'emp-' + Date.now(),
       employeeId: data.employeeId.toUpperCase(),
       name: data.name,
       email: data.email,
       role: data.role,
-      avatar: data.role === 'ADMIN_HR' 
-        ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=250&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=250&auto=format&fit=crop&q=80',
+      avatar: data.avatar || defaultAvatar,
       phone: '+1 (555) 000-0000',
       address: '100 Innovation Way, Suite 500',
       designation: data.role === 'ADMIN_HR' ? 'HR Specialist' : 'Associate Engineer',

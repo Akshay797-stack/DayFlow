@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
 import { Modal } from '../common/Modal';
-import { Shield, User, Lock, Mail, UserPlus, AlertCircle, ArrowRight } from 'lucide-react';
+import { Shield, User, Lock, Mail, UserPlus, AlertCircle, Upload, Camera, X, Image as ImageIcon } from 'lucide-react';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -23,8 +23,35 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('EMPLOYEE');
   const [department, setDepartment] = useState('Engineering');
+  const [avatar, setAvatar] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type (JPEG / PNG / WebP)
+    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+      setError('Please upload a valid image file (JPEG or PNG).');
+      return;
+    }
+
+    // Validate size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB.');
+      return;
+    }
+
+    setError(null);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatar(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +72,8 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
       email,
       role,
       password,
-      department
+      department,
+      avatar: avatar || undefined
     });
     setLoading(false);
 
@@ -71,6 +99,65 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
             <span>{error}</span>
           </div>
         )}
+
+        {/* Profile Picture Upload Section */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Profile Photo (JPEG / PNG)
+          </label>
+          <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+            <div className="relative group flex-shrink-0">
+              <img
+                src={avatar || (role === 'ADMIN_HR' 
+                  ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150' 
+                  : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150')}
+                alt="Profile Preview"
+                className="w-14 h-14 rounded-2xl object-cover ring-2 ring-odoo-700/20 shadow-xs"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                title="Upload Photo"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+                className="hidden"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-600 shadow-xs transition-colors"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{avatar ? 'Change Photo' : 'Upload JPEG / PNG'}</span>
+                </button>
+                {avatar && (
+                  <button
+                    type="button"
+                    onClick={() => setAvatar('')}
+                    className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                    title="Remove custom photo"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Supported formats: JPG, JPEG, PNG (Max 5MB)
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Role Selector */}
         <div>
