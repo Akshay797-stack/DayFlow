@@ -18,14 +18,24 @@ export const SalaryStructureModal: React.FC<SalaryStructureModalProps> = ({
   const { updateSalaryStructure } = useHRData();
 
   const [formData, setFormData] = useState<SalaryStructure>({
-    baseSalary: 0,
-    hra: 0,
-    conveyance: 0,
-    specialAllowance: 0,
-    providentFund: 0,
-    professionalTax: 0,
-    bonus: 0,
-    currency: 'USD'
+    monthlyWage: 50000,
+    yearlyWage: 600000,
+    workingDaysPerWeek: 5,
+    workingHoursPerDay: 8,
+    breakTimeHours: 1,
+    baseSalary: 25000,
+    hra: 12500,
+    standardAllowance: 4167,
+    performanceBonus: 2082.5,
+    leaveTravelAllowance: 2082.5,
+    fixedAllowance: 4168,
+    conveyance: 500,
+    specialAllowance: 800,
+    providentFund: 3000,
+    employerPF: 3000,
+    professionalTax: 200,
+    bonus: 2082.5,
+    currency: 'INR'
   });
 
   useEffect(() => {
@@ -34,11 +44,11 @@ export const SalaryStructureModal: React.FC<SalaryStructureModalProps> = ({
     }
   }, [employee]);
 
-  const handleChange = (field: keyof SalaryStructure, val: number) => {
+  const handleChange = (field: keyof SalaryStructure, val: any) => {
     setFormData(prev => ({ ...prev, [field]: val }));
   };
 
-  const gross = formData.baseSalary + formData.hra + formData.conveyance + formData.specialAllowance + formData.bonus;
+  const gross = formData.monthlyWage || (formData.baseSalary + formData.hra + (formData.conveyance || 0) + (formData.specialAllowance || 0) + (formData.bonus || 0));
   const deductions = formData.providentFund + formData.professionalTax;
   const net = gross - deductions;
 

@@ -142,7 +142,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         />
         <StatCard
           title={isAdmin ? "Monthly Payroll" : "My Net Take-Home"}
-          value={isAdmin ? "$64,872" : `$${currentUser?.salaryStructure ? (currentUser.salaryStructure.baseSalary + currentUser.salaryStructure.hra + currentUser.salaryStructure.conveyance + currentUser.salaryStructure.specialAllowance + currentUser.salaryStructure.bonus - currentUser.salaryStructure.providentFund - currentUser.salaryStructure.professionalTax).toLocaleString() : '12,660'}`}
+          value={isAdmin ? "$64,872" : `$${currentUser?.salaryStructure ? (currentUser.salaryStructure.monthlyWage ? (currentUser.salaryStructure.monthlyWage - currentUser.salaryStructure.providentFund - currentUser.salaryStructure.professionalTax) : (currentUser.salaryStructure.baseSalary + currentUser.salaryStructure.hra + (currentUser.salaryStructure.conveyance || 0) + (currentUser.salaryStructure.specialAllowance || 0) + (currentUser.salaryStructure.bonus || 0) - currentUser.salaryStructure.providentFund - currentUser.salaryStructure.professionalTax)).toLocaleString() : '12,660'}`}
           subtitle={isAdmin ? "July 2026 Disbursed" : "Disbursed on 28th of month"}
           icon={DollarSign}
           iconColor="text-emerald-600 dark:text-emerald-400"

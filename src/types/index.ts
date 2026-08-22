@@ -11,14 +11,50 @@ export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type PayrollStatus = 'PAID' | 'PENDING' | 'PROCESSING';
 
 export interface SalaryStructure {
-  baseSalary: number;
-  hra: number;
+  monthlyWage: number;
+  yearlyWage: number;
+  workingDaysPerWeek: number;
+  workingHoursPerDay: number;
+  breakTimeHours: number;
+  // Computed Salary Components (Auto-updated based on Monthly Wage)
+  baseSalary: number; // 50.00% of wage
+  hra: number; // 50.00% of Basic salary
+  standardAllowance: number; // 16.67% of Basic
+  performanceBonus: number; // 8.33% of Basic
+  leaveTravelAllowance: number; // 8.33% of Basic
+  fixedAllowance: number; // Remainder to match total monthly wage
   conveyance: number;
   specialAllowance: number;
-  providentFund: number;
-  professionalTax: number;
   bonus: number;
+  // Provident Fund (PF) Contribution
+  providentFund: number; // Employee PF (12.00% of Basic)
+  employerPF: number; // Employer PF (12.00% of Basic)
+  // Tax Deductions
+  professionalTax: number; // e.g. 200.00
   currency: string;
+}
+
+export interface PrivateInfo {
+  dateOfBirth?: string;
+  residingAddress?: string;
+  nationality?: string;
+  personalEmail?: string;
+  gender?: string;
+  maritalStatus?: string;
+  dateOfJoining?: string;
+  // Bank & Statutory Details
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  panNumber?: string;
+  uanNumber?: string;
+}
+
+export interface EmployeeCertification {
+  id: string;
+  name: string;
+  issuer: string;
+  date: string;
 }
 
 export interface EmployeeDocument {
@@ -61,6 +97,13 @@ export interface Employee {
   salaryStructure: SalaryStructure;
   documents: EmployeeDocument[];
   leaveBalance: LeaveBalance;
+  // Wireframe Profile Info
+  about?: string;
+  whatILoveAboutJob?: string;
+  interestsAndHobbies?: string;
+  skills?: string[];
+  certifications?: EmployeeCertification[];
+  privateInfo?: PrivateInfo;
   bio?: string;
   emergencyContact?: {
     name: string;

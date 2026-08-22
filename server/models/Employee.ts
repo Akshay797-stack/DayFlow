@@ -10,14 +10,46 @@ export interface IEmployeeDocument {
 }
 
 export interface ISalaryStructure {
+  monthlyWage?: number;
+  yearlyWage?: number;
+  workingDaysPerWeek?: number;
+  workingHoursPerDay?: number;
+  breakTimeHours?: number;
   baseSalary: number;
   hra: number;
-  conveyance: number;
-  specialAllowance: number;
+  conveyance?: number;
+  specialAllowance?: number;
+  standardAllowance?: number;
+  performanceBonus?: number;
+  leaveTravelAllowance?: number;
+  fixedAllowance?: number;
   providentFund: number;
+  employerPF?: number;
   professionalTax: number;
-  bonus: number;
+  bonus?: number;
   currency: string;
+}
+
+export interface IPrivateInfo {
+  dateOfBirth?: string;
+  residingAddress?: string;
+  nationality?: string;
+  personalEmail?: string;
+  gender?: string;
+  maritalStatus?: string;
+  dateOfJoining?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  panNumber?: string;
+  uanNumber?: string;
+}
+
+export interface IEmployeeCertification {
+  id: string;
+  name: string;
+  issuer: string;
+  date: string;
 }
 
 export interface ILeaveBalance {
@@ -43,6 +75,12 @@ export interface IEmployee extends Document {
   managerName: string;
   isEmailVerified: boolean;
   bio?: string;
+  about?: string;
+  whatILoveAboutJob?: string;
+  interestsAndHobbies?: string;
+  skills?: string[];
+  certifications?: IEmployeeCertification[];
+  privateInfo?: IPrivateInfo;
   emergencyContact?: {
     name: string;
     relationship: string;
@@ -70,20 +108,56 @@ const EmployeeSchema: Schema = new Schema(
     managerName: { type: String, default: 'Sarah Jenkins' },
     isEmailVerified: { type: Boolean, default: true },
     bio: { type: String, default: '' },
+    about: { type: String, default: '' },
+    whatILoveAboutJob: { type: String, default: '' },
+    interestsAndHobbies: { type: String, default: '' },
+    skills: { type: [String], default: ['React', 'TypeScript', 'Node.js', 'System Architecture'] },
+    certifications: [
+      {
+        id: { type: String },
+        name: { type: String },
+        issuer: { type: String },
+        date: { type: String }
+      }
+    ],
+    privateInfo: {
+      dateOfBirth: { type: String, default: '1995-06-15' },
+      residingAddress: { type: String, default: 'San Francisco, CA' },
+      nationality: { type: String, default: 'American' },
+      personalEmail: { type: String, default: '' },
+      gender: { type: String, default: 'Male' },
+      maritalStatus: { type: String, default: 'Single' },
+      dateOfJoining: { type: String, default: '2023-01-01' },
+      bankName: { type: String, default: 'Silicon Valley National Bank' },
+      accountNumber: { type: String, default: '987654321098' },
+      ifscCode: { type: String, default: 'SVNB0004521' },
+      panNumber: { type: String, default: 'ABCDE1234F' },
+      uanNumber: { type: String, default: '100987654321' }
+    },
     emergencyContact: {
       name: { type: String, default: '' },
       relationship: { type: String, default: '' },
       phone: { type: String, default: '' }
     },
     salaryStructure: {
-      baseSalary: { type: Number, default: 8000 },
-      hra: { type: Number, default: 2400 },
+      monthlyWage: { type: Number, default: 50000 },
+      yearlyWage: { type: Number, default: 600000 },
+      workingDaysPerWeek: { type: Number, default: 5 },
+      workingHoursPerDay: { type: Number, default: 8 },
+      breakTimeHours: { type: Number, default: 1 },
+      baseSalary: { type: Number, default: 25000 },
+      hra: { type: Number, default: 12500 },
       conveyance: { type: Number, default: 500 },
       specialAllowance: { type: Number, default: 800 },
-      providentFund: { type: Number, default: 960 },
+      standardAllowance: { type: Number, default: 4167 },
+      performanceBonus: { type: Number, default: 2082.5 },
+      leaveTravelAllowance: { type: Number, default: 2082.5 },
+      fixedAllowance: { type: Number, default: 4168 },
+      providentFund: { type: Number, default: 3000 },
+      employerPF: { type: Number, default: 3000 },
       professionalTax: { type: Number, default: 200 },
       bonus: { type: Number, default: 500 },
-      currency: { type: String, default: 'USD' }
+      currency: { type: String, default: 'INR' }
     },
     documents: [
       {

@@ -323,7 +323,9 @@ export const StorageService = {
       const exists = payrolls.find(p => p.employeeId === emp.employeeId && p.month === month && p.year === year);
       
       const sal = emp.salaryStructure;
-      const fullGross = sal.baseSalary + sal.hra + sal.conveyance + sal.specialAllowance + sal.bonus;
+      const allowances = (sal.standardAllowance || 0) + (sal.leaveTravelAllowance || 0) + (sal.fixedAllowance || 0) + (sal.conveyance || 0) + (sal.specialAllowance || 0);
+      const bonus = sal.performanceBonus || sal.bonus || 0;
+      const fullGross = sal.monthlyWage || (sal.baseSalary + sal.hra + allowances + bonus);
       
       // Calculate attendance-linked payable days
       const empAtt = attendances.filter(a => a.employeeId === emp.employeeId);
@@ -359,8 +361,8 @@ export const StorageService = {
           payableDays,
           basic: sal.baseSalary,
           hra: sal.hra,
-          allowances: sal.conveyance + sal.specialAllowance,
-          bonus: sal.bonus,
+          allowances: allowances,
+          bonus: bonus,
           grossSalary: fullGross,
           pf: sal.providentFund,
           tax: sal.professionalTax,
