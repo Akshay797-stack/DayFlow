@@ -2,6 +2,20 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-odoo-50: #fdf6f9;
+  --color-odoo-100: #faeaf2;
+  --color-odoo-200: #f5d3e4;
+  --color-odoo-300: #f0b4d2;
+  --color-odoo-400: #e582b3;
+  --color-odoo-500: #d65593;
+  --color-odoo-600: #b53876;
+  --color-odoo-700: #8c3866;
+  --color-odoo-800: #714B67;
+  --color-odoo-900: #5a223e;
+  --color-odoo-950: #3c1228;
+}
+
 @layer base {
   :root {
     --brand-primary: #714B67;
@@ -71,71 +85,6 @@
 
 .dark .card-interactive:hover {
   box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.35);
-}
-
-/* Odoo Brand Utility Colors */
-.bg-odoo-800 {
-  background-color: #714B67;
-}
-
-.bg-odoo-900 {
-  background-color: #5a223e;
-}
-
-.bg-odoo-700 {
-  background-color: #8c3866;
-}
-
-.bg-odoo-50 {
-  background-color: #fdf6f9;
-}
-
-.text-odoo-800 {
-  color: #714B67;
-}
-
-.text-odoo-700 {
-  color: #8c3866;
-}
-
-.text-odoo-400 {
-  color: #e582b3;
-}
-
-.text-odoo-300 {
-  color: #f0b4d2;
-}
-
-.text-odoo-100 {
-  color: #faeaf2;
-}
-
-.border-odoo-800 {
-  border-color: #714B67;
-}
-
-.border-odoo-700 {
-  border-color: #8c3866;
-}
-
-.border-odoo-100 {
-  border-color: #faeaf2;
-}
-
-.hover\:bg-odoo-900:hover {
-  background-color: #5a223e;
-}
-
-.hover\:bg-odoo-700:hover {
-  background-color: #8c3866;
-}
-
-.hover\:bg-odoo-50:hover {
-  background-color: #fdf6f9;
-}
-
-.hover\:bg-odoo-100:hover {
-  background-color: #faeaf2;
 }
 
 @keyframes pulseSubtle {

@@ -72,34 +72,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <>
                 <button
                   onClick={() => onNavigate('employees')}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-odoo-900 hover:bg-odoo-50 text-xs font-bold shadow-md transition-all hover:scale-[1.02]"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold shadow-md transition-all hover:scale-[1.02] cursor-pointer"
                 >
                   <Users className="w-4 h-4 text-odoo-800" />
-                  <span>Manage Employees</span>
+                  <span className="text-slate-900 font-bold">Manage Employees</span>
                 </button>
                 <button
                   onClick={() => onNavigate('payroll')}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-bold shadow-md transition-all hover:scale-[1.02]"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-bold shadow-md transition-all hover:scale-[1.02] cursor-pointer"
                 >
-                  <DollarSign className="w-4 h-4" />
-                  <span>Run Payroll</span>
+                  <DollarSign className="w-4 h-4 text-white" />
+                  <span className="text-white font-bold">Run Payroll</span>
                 </button>
               </>
             ) : (
               <>
                 <button
                   onClick={() => setIsApplyModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-odoo-900 hover:bg-odoo-50 text-xs font-bold shadow-md transition-all hover:scale-[1.02]"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold shadow-md transition-all hover:scale-[1.02] cursor-pointer"
                 >
                   <CalendarDays className="w-4 h-4 text-odoo-800" />
-                  <span>Apply for Leave</span>
+                  <span className="text-slate-900 font-bold">Apply for Leave</span>
                 </button>
                 <button
                   onClick={() => onNavigate('payroll')}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-bold shadow-md transition-all hover:scale-[1.02]"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-bold shadow-md transition-all hover:scale-[1.02] cursor-pointer"
                 >
-                  <FileText className="w-4 h-4" />
-                  <span>My Payslips</span>
+                  <FileText className="w-4 h-4 text-white" />
+                  <span className="text-white font-bold">My Payslips</span>
                 </button>
               </>
             )}
