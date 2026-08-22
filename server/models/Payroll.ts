@@ -5,6 +5,11 @@ export interface IPayroll extends Document {
   employeeName: string;
   month: string;
   year: number;
+  totalWorkingDays: number;
+  presentDays: number;
+  paidLeaveDays: number;
+  unpaidDays: number;
+  payableDays: number;
   basic: number;
   hra: number;
   allowances: number;
@@ -12,6 +17,7 @@ export interface IPayroll extends Document {
   grossSalary: number;
   pf: number;
   tax: number;
+  lopDeduction: number;
   totalDeductions: number;
   netPay: number;
   status: 'PAID' | 'PENDING' | 'PROCESSING';
@@ -24,6 +30,11 @@ const PayrollSchema: Schema = new Schema(
     employeeName: { type: String, required: true },
     month: { type: String, required: true },
     year: { type: Number, required: true },
+    totalWorkingDays: { type: Number, default: 22 },
+    presentDays: { type: Number, default: 20 },
+    paidLeaveDays: { type: Number, default: 2 },
+    unpaidDays: { type: Number, default: 0 },
+    payableDays: { type: Number, default: 22 },
     basic: { type: Number, required: true },
     hra: { type: Number, required: true },
     allowances: { type: Number, default: 0 },
@@ -31,6 +42,7 @@ const PayrollSchema: Schema = new Schema(
     grossSalary: { type: Number, required: true },
     pf: { type: Number, default: 0 },
     tax: { type: Number, default: 0 },
+    lopDeduction: { type: Number, default: 0 },
     totalDeductions: { type: Number, required: true },
     netPay: { type: Number, required: true },
     status: {

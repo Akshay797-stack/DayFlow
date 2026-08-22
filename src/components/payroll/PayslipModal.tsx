@@ -2,7 +2,7 @@ import React from 'react';
 import { PayrollRecord, Employee } from '../../types';
 import { Modal } from '../common/Modal';
 import { generatePayslipPDF } from '../../services/pdfGenerator';
-import { Download, FileText, CheckCircle2, Building, ShieldCheck } from 'lucide-react';
+import { Download, FileText, CheckCircle2, Building, ShieldCheck, Clock, Calendar, AlertTriangle } from 'lucide-react';
 import { Badge } from '../common/Badge';
 
 interface PayslipModalProps {
@@ -24,6 +24,13 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
     generatePayslipPDF(payroll, employee);
   };
 
+  const totalWorkingDays = payroll.totalWorkingDays || 22;
+  const presentDays = payroll.presentDays || (totalWorkingDays - (payroll.unpaidDays || 0) - (payroll.paidLeaveDays || 2));
+  const paidLeaveDays = payroll.paidLeaveDays || 2;
+  const unpaidDays = payroll.unpaidDays || 0;
+  const payableDays = payroll.payableDays || (totalWorkingDays - unpaidDays);
+  const lopDeduction = payroll.lopDeduction || 0;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -32,14 +39,14 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
       subtitle={`Payment Period: ${payroll.month} ${payroll.year}`}
       maxWidth="2xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Company & Employee Summary Header */}
         <div className="p-5 rounded-2xl bg-gradient-to-r from-odoo-800 to-odoo-900 text-white shadow-md relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-extrabold tracking-tight font-display">DAYFLOW HRMS</span>
-                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-white/20">Official Slip</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-white/20">Official Statement</span>
               </div>
               <p className="text-xs text-odoo-100 mt-1">Enterprise Human Resource & Payroll Division</p>
             </div>
@@ -65,9 +72,43 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
             <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">{employee?.designation || 'Specialist'}</span>
           </div>
           <div>
-            <span className="text-[11px] text-slate-400 block font-medium">Status</span>
+            <span className="text-[11px] text-slate-400 block font-medium">Disbursement Status</span>
             <div className="mt-0.5">
               <Badge status={payroll.status} size="sm" />
+            </div>
+          </div>
+        </div>
+
+        {/* Attendance-Based Payable Days Banner (Wireframe Requirement) */}
+        <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-800/50">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="text-xs font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Attendance & Payable Days Computation</span>
+            </h5>
+            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
+              {payableDays} / {totalWorkingDays} Payable Days
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
+            <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-800">
+              <span className="text-[10px] text-slate-400 block font-medium uppercase">Working Days</span>
+              <span className="font-bold text-slate-900 dark:text-white font-mono">{totalWorkingDays} days</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-800">
+              <span className="text-[10px] text-slate-400 block font-medium uppercase">Days Present</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">{presentDays} days</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-800">
+              <span className="text-[10px] text-slate-400 block font-medium uppercase">Paid Leaves</span>
+              <span className="font-bold text-purple-600 dark:text-purple-400 font-mono">{paidLeaveDays} days</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-800">
+              <span className="text-[10px] text-slate-400 block font-medium uppercase">Unpaid / LOP Days</span>
+              <span className={`font-bold font-mono ${unpaidDays > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>
+                {unpaidDays} days
+              </span>
             </div>
           </div>
         </div>
@@ -115,6 +156,12 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
                 <span className="text-slate-600 dark:text-slate-400">Professional Tax & Withholding</span>
                 <span className="font-semibold text-slate-900 dark:text-white font-mono">${payroll.tax.toLocaleString()}</span>
               </div>
+              {lopDeduction > 0 && (
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-rose-600 dark:text-rose-400 font-semibold">
+                  <span>Loss of Pay (LOP Deduction)</span>
+                  <span className="font-mono">-${lopDeduction.toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex justify-between py-1">
                 <span className="text-slate-600 dark:text-slate-400">Other Deductions</span>
                 <span className="font-semibold text-slate-900 dark:text-white font-mono">$0.00</span>
@@ -150,10 +197,10 @@ export const PayslipModal: React.FC<PayslipModalProps> = ({
           <button
             type="button"
             onClick={handleDownload}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-odoo-800 hover:bg-odoo-900 text-white text-xs font-bold shadow-md shadow-odoo-800/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-odoo-800 hover:bg-odoo-900 text-white text-xs font-bold shadow-md shadow-odoo-800/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
           >
-            <Download className="w-4 h-4" />
-            <span>Download Official PDF Payslip</span>
+            <Download className="w-4 h-4 text-white" />
+            <span className="text-white font-bold">Download Official PDF Payslip</span>
           </button>
         </div>
       </div>

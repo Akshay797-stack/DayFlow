@@ -74,9 +74,10 @@ export interface AttendanceRecord {
   employeeId: string;
   employeeName: string;
   date: string; // YYYY-MM-DD
-  checkIn: string | null; // e.g. "09:02 AM"
-  checkOut: string | null; // e.g. "06:05 PM"
-  workingHours: number; // in hours e.g. 8.5
+  checkIn: string | null; // e.g. "09:00 AM" or "10:00"
+  checkOut: string | null; // e.g. "07:00 PM" or "19:00"
+  workingHours: number; // in hours e.g. 9.0
+  extraHours: number; // in hours e.g. 1.0 (overtime when work hours > 8.0)
   status: AttendanceStatus;
   notes?: string;
 }
@@ -105,6 +106,13 @@ export interface PayrollRecord {
   employeeName: string;
   month: string;
   year: number;
+  // Attendance-based payable day calculation
+  totalWorkingDays: number;
+  presentDays: number;
+  paidLeaveDays: number;
+  unpaidDays: number;
+  payableDays: number;
+  // Salary Breakdown
   basic: number;
   hra: number;
   allowances: number;
@@ -112,6 +120,7 @@ export interface PayrollRecord {
   grossSalary: number;
   pf: number;
   tax: number;
+  lopDeduction: number; // Loss of Pay Deduction for unpaid/missing days
   totalDeductions: number;
   netPay: number;
   status: PayrollStatus;

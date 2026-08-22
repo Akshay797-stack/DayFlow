@@ -1,32 +1,37 @@
-import { Employee, AttendanceRecord, LeaveRequest, PayrollRecord, NotificationItem, LeaveType, LeaveStatus, SalaryStructure } from '../types';
+import { Employee, AttendanceRecord, LeaveRequest, PayrollRecord, NotificationItem, LeaveType, LeaveStatus, SalaryStructure, AttendanceStatus } from '../types';
 import { INITIAL_EMPLOYEES, INITIAL_ATTENDANCE, INITIAL_LEAVES, INITIAL_PAYROLL, INITIAL_NOTIFICATIONS } from './mockData';
 
 const KEYS = {
-  EMPLOYEES: 'dayflow_employees_v1',
-  ATTENDANCE: 'dayflow_attendance_v1',
-  LEAVES: 'dayflow_leaves_v1',
-  PAYROLL: 'dayflow_payroll_v1',
-  NOTIFICATIONS: 'dayflow_notifications_v1',
-  AUTH: 'dayflow_auth_v1',
-  THEME: 'dayflow_theme_v1',
+  EMPLOYEES: 'dayflow_db_employees_v1',
+  ATTENDANCE: 'dayflow_db_attendance_v1',
+  LEAVES: 'dayflow_db_leaves_v1',
+  PAYROLL: 'dayflow_db_payroll_v1',
+  NOTIFICATIONS: 'dayflow_db_notifications_v1',
+  INITIALIZED: 'dayflow_db_initialized_v1'
 };
 
-// Storage helper with fallback to initial seed
 export const StorageService = {
-  // Reset all data to factory demo state
+  // Initialize storage with enterprise seed data
+  init(): void {
+    if (!localStorage.getItem(KEYS.INITIALIZED)) {
+      this.resetToDemo();
+    }
+  },
+
   resetToDemo(): void {
     localStorage.setItem(KEYS.EMPLOYEES, JSON.stringify(INITIAL_EMPLOYEES));
     localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(INITIAL_ATTENDANCE));
     localStorage.setItem(KEYS.LEAVES, JSON.stringify(INITIAL_LEAVES));
     localStorage.setItem(KEYS.PAYROLL, JSON.stringify(INITIAL_PAYROLL));
     localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS));
+    localStorage.setItem(KEYS.INITIALIZED, 'true');
   },
 
   // Employees
   getEmployees(): Employee[] {
     const raw = localStorage.getItem(KEYS.EMPLOYEES);
     if (!raw) {
-      localStorage.setItem(KEYS.EMPLOYEES, JSON.stringify(INITIAL_EMPLOYEES));
+      this.init();
       return INITIAL_EMPLOYEES;
     }
     try {
@@ -45,6 +50,12 @@ export const StorageService = {
     return employees.find(e => e.id === id || e.employeeId === id);
   },
 
+  addEmployee(emp: Employee): void {
+    const employees = this.getEmployees();
+    employees.unshift(emp);
+    this.saveEmployees(employees);
+  },
+
   updateEmployee(id: string, updates: Partial<Employee>): Employee | null {
     const employees = this.getEmployees();
     const index = employees.findIndex(e => e.id === id || e.employeeId === id);
@@ -53,12 +64,6 @@ export const StorageService = {
     employees[index] = { ...employees[index], ...updates };
     this.saveEmployees(employees);
     return employees[index];
-  },
-
-  addEmployee(employee: Employee): void {
-    const employees = this.getEmployees();
-    employees.unshift(employee);
-    this.saveEmployees(employees);
   },
 
   // Attendance
@@ -84,12 +89,11 @@ export const StorageService = {
     const today = new Date().toISOString().split('T')[0];
     const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Check if record exists for today
     const existingIndex = records.findIndex(r => r.employeeId === employee.employeeId && r.date === today);
-
     if (existingIndex !== -1) {
       records[existingIndex].checkIn = nowTime;
       records[existingIndex].status = 'PRESENT';
+      records[existingIndex].extraHours = Math.max(0, Number((records[existingIndex].workingHours - 8.0).toFixed(2)));
       this.saveAttendance(records);
       return records[existingIndex];
     }
@@ -102,6 +106,7 @@ export const StorageService = {
       checkIn: nowTime,
       checkOut: null,
       workingHours: 0,
+      extraHours: 0,
       status: 'PRESENT'
     };
 
@@ -121,7 +126,7 @@ export const StorageService = {
     const record = records[existingIndex];
     record.checkOut = nowTime;
 
-    // Calculate approximate working hours if checkIn exists
+    // Calculate working hours & overtime extra hours
     if (record.checkIn) {
       try {
         const parseTime = (timeStr: string) => {
@@ -134,11 +139,13 @@ export const StorageService = {
         const inHrs = parseTime(record.checkIn);
         const outHrs = parseTime(nowTime);
         record.workingHours = Math.max(0.5, Number((outHrs - inHrs).toFixed(2)));
+        record.extraHours = Math.max(0, Number((record.workingHours - 8.0).toFixed(2)));
         if (record.workingHours < 5) {
           record.status = 'HALF_DAY';
         }
       } catch {
         record.workingHours = 8.0;
+        record.extraHours = 0;
       }
     }
 
@@ -249,6 +256,7 @@ export const StorageService = {
         checkIn: null,
         checkOut: null,
         workingHours: 0,
+        extraHours: 0,
         status: 'LEAVE',
         notes: `${leave.leaveType} Leave: ${leave.reason}`
       });
@@ -297,15 +305,38 @@ export const StorageService = {
   runMonthlyPayrollBatch(month: string, year: number): PayrollRecord[] {
     const employees = this.getEmployees();
     const payrolls = this.getPayroll();
+    const attendances = this.getAttendance();
+    const leaves = this.getLeaves();
     const newRecords: PayrollRecord[] = [];
+
+    const TOTAL_STANDARD_MONTHLY_DAYS = 22;
 
     employees.forEach(emp => {
       // Check if already generated for this month
       const exists = payrolls.find(p => p.employeeId === emp.employeeId && p.month === month && p.year === year);
+      
       const sal = emp.salaryStructure;
-      const gross = sal.baseSalary + sal.hra + sal.conveyance + sal.specialAllowance + sal.bonus;
-      const deductions = sal.providentFund + sal.professionalTax;
-      const net = gross - deductions;
+      const fullGross = sal.baseSalary + sal.hra + sal.conveyance + sal.specialAllowance + sal.bonus;
+      
+      // Calculate attendance-linked payable days
+      const empAtt = attendances.filter(a => a.employeeId === emp.employeeId);
+      const presentDaysCount = empAtt.filter(a => a.status === 'PRESENT' || a.status === 'HALF_DAY').length;
+      const paidLeavesCount = leaves.filter(l => l.employeeId === emp.employeeId && l.status === 'APPROVED' && l.leaveType !== 'UNPAID').reduce((sum, l) => sum + l.totalDays, 0);
+      const unpaidLeavesCount = leaves.filter(l => l.employeeId === emp.employeeId && (l.leaveType === 'UNPAID' || l.status === 'REJECTED')).reduce((sum, l) => sum + l.totalDays, 0);
+      
+      const presentDays = Math.min(TOTAL_STANDARD_MONTHLY_DAYS, Math.max(18, presentDaysCount || 20));
+      const paidLeaveDays = Math.min(4, paidLeavesCount || 2);
+      const unpaidDays = Math.max(0, unpaidLeavesCount);
+      const payableDays = Math.max(0, TOTAL_STANDARD_MONTHLY_DAYS - unpaidDays);
+
+      // Loss of Pay calculation (LOP)
+      const perDaySalary = fullGross / TOTAL_STANDARD_MONTHLY_DAYS;
+      const lopDeduction = Number((unpaidDays * perDaySalary).toFixed(2));
+      const adjustedGross = Math.max(0, fullGross - lopDeduction);
+
+      const statutoryDeductions = sal.providentFund + sal.professionalTax;
+      const totalDeductions = statutoryDeductions + lopDeduction;
+      const net = Math.max(0, fullGross - totalDeductions);
 
       if (!exists) {
         const record: PayrollRecord = {
@@ -314,14 +345,20 @@ export const StorageService = {
           employeeName: emp.name,
           month,
           year,
+          totalWorkingDays: TOTAL_STANDARD_MONTHLY_DAYS,
+          presentDays,
+          paidLeaveDays,
+          unpaidDays,
+          payableDays,
           basic: sal.baseSalary,
           hra: sal.hra,
           allowances: sal.conveyance + sal.specialAllowance,
           bonus: sal.bonus,
-          grossSalary: gross,
+          grossSalary: fullGross,
           pf: sal.providentFund,
           tax: sal.professionalTax,
-          totalDeductions: deductions,
+          lopDeduction,
+          totalDeductions,
           netPay: net,
           status: 'PAID',
           paymentDate: `${year}-${new Date().getMonth() + 1 < 10 ? '0' + (new Date().getMonth() + 1) : new Date().getMonth() + 1}-28`
@@ -368,15 +405,15 @@ export const StorageService = {
 
   addNotification(notif: Omit<NotificationItem, 'id' | 'timestamp' | 'read'>): NotificationItem {
     const notifs = this.getNotifications();
-    const item: NotificationItem = {
+    const newNotif: NotificationItem = {
       ...notif,
       id: 'notif-' + Date.now(),
       timestamp: 'Just now',
       read: false
     };
-    notifs.unshift(item);
+    notifs.unshift(newNotif);
     this.saveNotifications(notifs);
-    return item;
+    return newNotif;
   },
 
   markNotificationRead(id: string): void {
@@ -390,11 +427,12 @@ export const StorageService = {
 
   markAllNotificationsRead(userId?: string): void {
     const notifs = this.getNotifications();
-    notifs.forEach(n => {
+    const updated = notifs.map(n => {
       if (!userId || n.userId === 'ALL' || n.userId === userId) {
-        n.read = true;
+        return { ...n, read: true };
       }
+      return n;
     });
-    this.saveNotifications(notifs);
+    this.saveNotifications(updated);
   }
 };
