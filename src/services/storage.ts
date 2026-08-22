@@ -58,7 +58,14 @@ export const StorageService = {
 
   updateEmployee(id: string, updates: Partial<Employee>): Employee | null {
     const employees = this.getEmployees();
-    const index = employees.findIndex(e => e.id === id || e.employeeId === id);
+    const index = employees.findIndex(e => 
+      e.id === id || 
+      e.employeeId?.toUpperCase() === id.toUpperCase() || 
+      (e as any)._id === id || 
+      (updates.email && e.email?.toLowerCase() === updates.email?.toLowerCase()) || 
+      (updates.employeeId && e.employeeId?.toUpperCase() === updates.employeeId?.toUpperCase()) ||
+      (e.email && e.email?.toLowerCase() === id.toLowerCase())
+    );
     if (index === -1) return null;
 
     employees[index] = { ...employees[index], ...updates };

@@ -62,14 +62,38 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const refreshAll = useCallback(async () => {
-    // 1. First load from local storage for instant render
+    // 1. Load from local storage for instant render
     const localEmps = StorageService.getEmployees();
     const localAtt = StorageService.getAttendance();
     const localLvs = StorageService.getLeaves();
     const localPay = StorageService.getPayroll();
     const localNotifs = StorageService.getNotifications(currentUser?.employeeId);
 
-    setEmployees(localEmps);
+    // Helper to keep currentUser custom photo and profile in sync with employee directory
+    const syncWithCurrentUser = (list: Employee[]): Employee[] => {
+      if (!currentUser) return list;
+      const copy = [...list];
+      const idx = copy.findIndex(e => 
+        (e.id && currentUser.id && e.id === currentUser.id) ||
+        (e.employeeId && currentUser.employeeId && e.employeeId.toUpperCase() === currentUser.employeeId.toUpperCase()) ||
+        (e.email && currentUser.email && e.email.toLowerCase() === currentUser.email.toLowerCase())
+      );
+      if (idx !== -1) {
+        copy[idx] = { 
+          ...copy[idx], 
+          ...currentUser, 
+          avatar: currentUser.avatar || copy[idx].avatar,
+          name: currentUser.name || copy[idx].name,
+          designation: currentUser.designation || copy[idx].designation
+        };
+      } else {
+        copy.unshift(currentUser);
+      }
+      return copy;
+    };
+
+    const mergedLocalEmps = syncWithCurrentUser(localEmps);
+    setEmployees(mergedLocalEmps);
     setAttendance(localAtt);
     setLeaves(localLvs);
     setPayroll(localPay);
@@ -86,8 +110,9 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ]);
 
       if (apiEmps && apiEmps.length > 0) {
-        setEmployees(apiEmps);
-        StorageService.saveEmployees(apiEmps);
+        const mergedApiEmps = syncWithCurrentUser(apiEmps);
+        setEmployees(mergedApiEmps);
+        StorageService.saveEmployees(mergedApiEmps);
         setIsMongoDBConnected(true);
       }
       if (apiAtt && apiAtt.length > 0) {
@@ -111,9 +136,13 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     if (currentUser) {
-      const refreshedUser = localEmps.find(e => e.id === currentUser.id || e.employeeId === currentUser.employeeId);
+      const refreshedUser = mergedLocalEmps.find(e => 
+        e.id === currentUser.id || 
+        e.employeeId === currentUser.employeeId || 
+        e.email.toLowerCase() === currentUser.email.toLowerCase()
+      );
       if (refreshedUser) {
-        setActiveSelectedEmployee(prev => prev ? (localEmps.find(e => e.id === prev.id) || refreshedUser) : refreshedUser);
+        setActiveSelectedEmployee(prev => prev ? (mergedLocalEmps.find(e => e.id === prev.id) || refreshedUser) : refreshedUser);
       }
     }
   }, [currentUser]);

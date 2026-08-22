@@ -22,7 +22,7 @@ interface EmployeesPageProps {
 }
 
 export const EmployeesPage: React.FC<EmployeesPageProps> = ({ onNavigate }) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, currentUser } = useAuth();
   const { employees, setActiveSelectedEmployee } = useHRData();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,7 +88,7 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Department Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
           {departments.map(dept => (
             <button
               key={dept}
@@ -107,42 +107,57 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({ onNavigate }) => {
 
       {/* Employee Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredEmployees.map((emp: Employee) => (
-          <div
-            key={emp.id}
-            className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 shadow-sm hover:border-odoo-700/50 dark:hover:border-odoo-500/50 card-interactive flex flex-col justify-between"
-          >
-            <div>
-              {/* Card Header: Avatar & Badges */}
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="relative">
-                    <img
-                      src={emp.avatar}
-                      alt={emp.name}
-                      className="w-14 h-14 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-slate-800"
-                    />
-                    {emp.isEmailVerified && (
-                      <span className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-500 text-white rounded-full ring-2 ring-white dark:ring-slate-900" title="Verified">
-                        <CheckCircle2 className="w-3 h-3" />
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-snug">
-                      {emp.name}
-                    </h3>
-                    <p className="text-xs font-semibold text-odoo-700 dark:text-odoo-400">
-                      {emp.designation}
-                    </p>
-                    <span className="text-[11px] text-slate-400 font-mono">
-                      {emp.employeeId}
-                    </span>
-                  </div>
-                </div>
+        {filteredEmployees.map((emp: Employee) => {
+          const isCurrentUserCard = !!(currentUser && (
+            emp.id === currentUser.id ||
+            emp.employeeId?.toUpperCase() === currentUser.employeeId?.toUpperCase() ||
+            emp.email?.toLowerCase() === currentUser.email?.toLowerCase()
+          ));
+          const avatarUrl = isCurrentUserCard && currentUser.avatar ? currentUser.avatar : emp.avatar;
+          const displayName = isCurrentUserCard && currentUser.name ? currentUser.name : emp.name;
+          const displayDesignation = isCurrentUserCard && currentUser.designation ? currentUser.designation : emp.designation;
+          const displayRole = isCurrentUserCard && currentUser.role ? currentUser.role : emp.role;
 
-                <Badge status={emp.role} size="sm" />
-              </div>
+          return (
+            <div
+              key={emp.id}
+              className={`bg-white dark:bg-slate-900 rounded-3xl border p-6 shadow-sm hover:border-odoo-700/50 dark:hover:border-odoo-500/50 card-interactive flex flex-col justify-between ${
+                isCurrentUserCard 
+                  ? 'border-odoo-700/40 dark:border-odoo-500/40 ring-1 ring-odoo-700/20' 
+                  : 'border-slate-200/80 dark:border-slate-800/80'
+              }`}
+            >
+              <div>
+                {/* Card Header: Avatar & Badges */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="relative">
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className="w-14 h-14 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-slate-800"
+                      />
+                      {emp.isEmailVerified && (
+                        <span className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-500 text-white rounded-full ring-2 ring-white dark:ring-slate-900" title="Verified">
+                          <CheckCircle2 className="w-3 h-3" />
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-snug">
+                        {displayName}
+                      </h3>
+                      <p className="text-xs font-semibold text-odoo-700 dark:text-odoo-400">
+                        {displayDesignation}
+                      </p>
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        {emp.employeeId}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Badge status={displayRole} size="sm" />
+                </div>
 
               {/* Details List */}
               <div className="space-y-2 py-3 border-t border-b border-slate-100 dark:border-slate-800/80 text-xs">
@@ -186,7 +201,8 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({ onNavigate }) => {
               )}
             </div>
           </div>
-        ))}
+        );
+      })}
       </div>
 
       {/* Edit Modal */}
