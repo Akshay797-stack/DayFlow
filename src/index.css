@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-primary: #714B67;
+    --brand-teal: #00A09D;
+    --brand-accent: #017E84;
+  }
+
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+/* Glassmorphism & Custom styles */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-panel {
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+}
+
+.card-interactive {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.08);
+}
+
+.dark .card-interactive:hover {
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.35);
+}
+
+/* Odoo Brand Utility Colors */
+.bg-odoo-800 {
+  background-color: #714B67;
+}
+
+.bg-odoo-900 {
+  background-color: #5a223e;
+}
+
+.bg-odoo-700 {
+  background-color: #8c3866;
+}
+
+.bg-odoo-50 {
+  background-color: #fdf6f9;
+}
+
+.text-odoo-800 {
+  color: #714B67;
+}
+
+.text-odoo-700 {
+  color: #8c3866;
+}
+
+.text-odoo-400 {
+  color: #e582b3;
+}
+
+.text-odoo-300 {
+  color: #f0b4d2;
+}
+
+.text-odoo-100 {
+  color: #faeaf2;
+}
+
+.border-odoo-800 {
+  border-color: #714B67;
+}
+
+.border-odoo-700 {
+  border-color: #8c3866;
+}
+
+.border-odoo-100 {
+  border-color: #faeaf2;
+}
+
+.hover\:bg-odoo-900:hover {
+  background-color: #5a223e;
+}
+
+.hover\:bg-odoo-700:hover {
+  background-color: #8c3866;
+}
+
+.hover\:bg-odoo-50:hover {
+  background-color: #fdf6f9;
+}
+
+.hover\:bg-odoo-100:hover {
+  background-color: #faeaf2;
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
