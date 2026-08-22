@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HRDataProvider } from './context/HRDataContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { Toast } from './components/common/Toast';
@@ -214,11 +215,13 @@ const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <HRDataProvider>
-        <AppContent />
-      </HRDataProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <HRDataProvider>
+          <AppContent />
+        </HRDataProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

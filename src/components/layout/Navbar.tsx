@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHRData } from '../../context/HRDataContext';
+import { useTheme } from '../../context/ThemeContext';
 import { 
   Bell, 
   Sun, 
@@ -29,25 +30,13 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) => {
   const { currentUser, logout, verifyEmail } = useAuth();
-  const { notifications, unreadNotifsCount, markNotificationAsRead, markAllNotificationsAsRead, isMongoDBConnected } = useHRData();
-
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    return document.documentElement.classList.contains('dark') ||
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const { notifications, unreadNotifsCount, markNotificationAsRead, markAllNotificationsAsRead } = useHRData();
+  const { isDark, toggleTheme } = useTheme();
 
   const [showNotifs, setShowNotifs] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDark]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,10 +50,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-  };
 
   const getNotifIcon = (type: string) => {
     switch (type) {
@@ -142,17 +127,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
           {/* Dark / Light Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="Toggle theme"
+            className="p-2.5 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer flex items-center justify-center border border-slate-200/60 dark:border-slate-700/60"
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle Theme"
           >
-            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            {isDark ? (
+              <Sun className="w-4 h-4 text-amber-400 animate-fade-in" />
+            ) : (
+              <Moon className="w-4 h-4 text-slate-700 animate-fade-in" />
+            )}
           </button>
 
           {/* Notifications Dropdown */}
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setShowNotifs(!showNotifs)}
-              className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="relative p-2.5 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200/60 dark:border-slate-700/60"
             >
               <Bell className="w-4 h-4" />
               {unreadNotifsCount > 0 && (
@@ -167,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
               <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-4 z-50 animate-slide-up">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-sm text-slate-900 dark:white">Notifications</h4>
+                    <h4 className="font-semibold text-sm text-slate-900 dark:text-white">Notifications</h4>
                     {unreadNotifsCount > 0 && (
                       <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400">
                         {unreadNotifsCount} new
@@ -233,7 +223,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2.5 p-1 sm:pl-2 sm:pr-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-2.5 p-1 sm:pl-2 sm:pr-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
             >
               <img
                 src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}

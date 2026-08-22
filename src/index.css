@@ -1,10 +1,16 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --brand-primary: #714B67;
     --brand-teal: #00A09D;
     --brand-accent: #017E84;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
