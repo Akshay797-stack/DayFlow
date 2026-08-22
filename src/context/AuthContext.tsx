@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Employee, UserRole } from '../types';
 import { StorageService } from '../services/storage';
+import { ApiService } from '../services/api';
 
 interface AuthContextType {
   currentUser: Employee | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
-  loginAsDemo: (role: UserRole) => void;
   signup: (data: {
     employeeId: string;
     name: string;
@@ -34,9 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
     }
-    // Default to HR Admin demo on first load for showcase
-    const employees = StorageService.getEmployees();
-    return employees[0] || null;
+    return null;
   });
 
   useEffect(() => {
@@ -48,6 +46,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [currentUser]);
 
   const login = async (email: string, _pass: string): Promise<{ success: boolean; message?: string }> => {
+    // 1. Check MongoDB API
+    try {
+      const res = await ApiService.login(email);
+      if (res && res.success && res.user) {
+        setCurrentUser(res.user);
+        return { success: true };
+      }
+    } catch {}
+
+    // 2. Fallback to local storage
     const employees = StorageService.getEmployees();
     const found = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
 
@@ -57,17 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setCurrentUser(found);
     return { success: true };
-  };
-
-  const loginAsDemo = (role: UserRole) => {
-    const employees = StorageService.getEmployees();
-    if (role === 'ADMIN_HR') {
-      const admin = employees.find(e => e.role === 'ADMIN_HR') || employees[0];
-      setCurrentUser(admin);
-    } else {
-      const emp = employees.find(e => e.role === 'EMPLOYEE') || employees[1];
-      setCurrentUser(emp);
-    }
   };
 
   const signup = async (data: {
@@ -127,7 +124,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    // Save to local storage
     StorageService.addEmployee(newEmp);
+
+    // Save to MongoDB API
+    try {
+      await ApiService.signup(data);
+    } catch {}
+
     setCurrentUser(newEmp);
     return { success: true };
   };
@@ -141,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!currentUser) return;
     const updated = { ...currentUser, isEmailVerified: true };
     StorageService.updateEmployee(currentUser.id, updated);
+    ApiService.verifyEmail(currentUser.employeeId);
     setCurrentUser(updated);
   };
 
@@ -148,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!currentUser) return;
     const updated = { ...currentUser, ...updates };
     StorageService.updateEmployee(currentUser.id, updated);
+    ApiService.updateEmployee(currentUser.id, updates);
     setCurrentUser(updated);
   };
 
@@ -158,7 +164,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!currentUser,
         isAdmin: currentUser?.role === 'ADMIN_HR',
         login,
-        loginAsDemo,
         signup,
         logout,
         verifyEmail,

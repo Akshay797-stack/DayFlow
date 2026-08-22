@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../common/Modal';
-import { Shield, User, Lock, Mail, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   onSwitchToRegister
 }) => {
-  const { login, loginAsDemo } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,15 +31,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const res = await login(email, password);
     setLoading(false);
     if (!res.success) {
-      setError(res.message || 'Invalid credentials.');
+      setError(res.message || 'Invalid email or password.');
     } else {
       onClose();
     }
-  };
-
-  const handleDemoClick = (role: 'ADMIN_HR' | 'EMPLOYEE') => {
-    loginAsDemo(role);
-    onClose();
   };
 
   return (
@@ -47,44 +42,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Sign In to Dayflow HRMS"
-      subtitle="Enter your enterprise credentials or use 1-click Demo"
+      subtitle="Enter your enterprise email and password to access the portal"
       maxWidth="md"
     >
-      <div className="space-y-5">
-        {/* 1-Click Demo Login Banner */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-odoo-50 to-teal-50 dark:from-slate-800 dark:to-slate-800 border border-odoo-100 dark:border-slate-700">
-          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 mb-2.5">
-            <Sparkles className="w-3.5 h-3.5 text-odoo-700 dark:text-odoo-400" />
-            <span>Hackathon Quick-Access Demos:</span>
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoClick('ADMIN_HR')}
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-odoo-800 hover:bg-odoo-900 text-white text-xs font-bold shadow-xs transition-all hover:scale-[1.02]"
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>HR Admin</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoClick('EMPLOYEE')}
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs transition-all hover:scale-[1.02]"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Employee</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-          <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Or Sign In with Email
-          </span>
-          <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-        </div>
-
+      <div className="space-y-4">
         {error && (
           <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -95,13 +56,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Email Address
+              Enterprise Email
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
-                placeholder="you@dayflow.com"
+                placeholder="name@dayflow.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -111,9 +72,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Password
+              </label>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -127,18 +90,28 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           </div>
 
+          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" defaultChecked className="rounded border-slate-300 text-odoo-800 focus:ring-odoo-800" />
+              <span>Remember this device</span>
+            </label>
+            <span className="text-odoo-700 dark:text-odoo-400 font-medium cursor-pointer hover:underline">
+              Forgot password?
+            </span>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
             className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-odoo-800 hover:bg-odoo-900 text-white text-xs font-bold shadow-md shadow-odoo-800/20 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
           >
-            <span>{loading ? 'Authenticating...' : 'Sign In to Dashboard'}</span>
+            <span>{loading ? 'Authenticating...' : 'Sign In to Portal'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
-          <span>New employee? </span>
+        <div className="text-center pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
+          <span>New to Dayflow? </span>
           <button
             onClick={() => {
               onClose();
@@ -146,7 +119,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             }}
             className="text-odoo-700 dark:text-odoo-400 font-bold hover:underline"
           >
-            Create your account
+            Register your employee account
           </button>
         </div>
       </div>

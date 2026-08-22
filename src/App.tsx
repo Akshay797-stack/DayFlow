@@ -16,10 +16,10 @@ import { PayrollPage } from './pages/PayrollPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 
-import { Sparkles, Shield, User, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Sparkles, Shield, User, ArrowRight, CheckCircle2, AlertCircle, Clock, FileCheck, DollarSign, Database } from 'lucide-react';
 
 const AppContent: React.FC = () => {
-  const { currentUser, isAuthenticated, verifyEmail, loginAsDemo } = useAuth();
+  const { currentUser, isAuthenticated, verifyEmail } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -27,7 +27,7 @@ const AppContent: React.FC = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  // If user is not logged in, render the premium landing / sign-in screen
+  // If user is not logged in, render the production landing / sign-in screen
   if (!isAuthenticated || !currentUser) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between selection:bg-odoo-700 selection:text-white relative overflow-hidden font-sans">
@@ -82,37 +82,57 @@ const AppContent: React.FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base text-slate-400 max-w-2xl mt-5 leading-relaxed">
-            Digital employee onboarding, live attendance tracking with shift punch terminals, automated leave governance workflows, and verified PDF payroll compensation engines.
+            Digital employee onboarding, live shift attendance punch terminals, automated leave governance workflows, and verified PDF payroll compensation engines.
           </p>
 
-          {/* Quick-Access 1-Click Demo Buttons for Hackathon Judges */}
-          <div className="mt-10 p-6 rounded-3xl bg-slate-900/90 border border-slate-800/80 shadow-2xl backdrop-blur-xl max-w-lg w-full">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-              1-Click Demo Showcase (Instant Access)
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => loginAsDemo('ADMIN_HR')}
-                className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-odoo-800 hover:bg-odoo-700 text-white font-bold text-xs shadow-lg shadow-odoo-800/25 transition-all hover:scale-105"
-              >
-                <Shield className="w-4 h-4 text-odoo-300" />
-                <span>Launch as HR Admin</span>
-              </button>
+          {/* Primary Action Buttons */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center gap-3.5">
+            <button
+              onClick={() => setIsLoginOpen(true)}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3 rounded-2xl bg-odoo-800 hover:bg-odoo-700 text-white font-bold text-xs shadow-lg shadow-odoo-800/25 transition-all hover:scale-105"
+            >
+              <span>Sign In to Portal</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsRegisterOpen(true)}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-xs transition-all hover:scale-105"
+            >
+              <span>Create New Account</span>
+            </button>
+          </div>
 
-              <button
-                onClick={() => loginAsDemo('EMPLOYEE')}
-                className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-lg shadow-teal-600/25 transition-all hover:scale-105"
-              >
-                <User className="w-4 h-4 text-teal-200" />
-                <span>Launch as Employee</span>
-              </button>
+          {/* Enterprise Capabilities Highlights */}
+          <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full text-left">
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-xl bg-odoo-800/20 text-odoo-400 flex items-center justify-center mb-3">
+                <Clock className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-bold text-white mb-1">Shift Attendance Terminal</h4>
+              <p className="text-[11px] text-slate-400">Live duration timer, daily target gauge, and CSV export logs.</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center mb-3">
+                <FileCheck className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-bold text-white mb-1">Leave Governance</h4>
+              <p className="text-[11px] text-slate-400">Quota balances, instant review triage, and reviewer feedback.</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3">
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <h4 className="text-xs font-bold text-white mb-1">Payroll & Salary Slips</h4>
+              <p className="text-[11px] text-slate-400">Batch salary run and verified PDF payslip generation.</p>
             </div>
           </div>
         </main>
 
         {/* Footer */}
         <footer className="px-6 py-6 border-t border-slate-900 text-center text-xs text-slate-500 relative z-10">
-          <p>© 2026 Dayflow Human Resource Management System. Built for Odoo Hackathon.</p>
+          <p>© 2026 Dayflow Human Resource Management System. Production Enterprise Suite.</p>
         </footer>
 
         {/* Modals */}

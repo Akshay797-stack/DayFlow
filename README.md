@@ -28,13 +28,13 @@ The platform runs on a dedicated MongoDB database (`dayflow_hrms`) with automate
 ## ✨ Key Features & Modules
 
 ### 🔐 1. Authentication & Role-Based Authorization
-- **Sign Up / Sign In**: Registration with Employee ID, Email, Role, Department, and Password strength compliance.
+- **Sign Up / Sign In**: Registration with Employee ID, Full Name, Profile Photo (JPEG/PNG), Email, Role (`HR Admin` vs `Employee`), Department, and Password.
+- **Production Credentials**:
+  - 🛡️ **HR Admin**: `admin@dayflow.com` / password: `admin123` (Sarah Jenkins - VP of People & Culture)
+  - 👤 **Employee**: `employee@dayflow.com` / password: `emp123` (Alex Morgan - Senior Full Stack Engineer)
 - **Role Privileges**:
   - **HR Admin**: Full organization directory governance, attendance adjustments, leave triage (Approve/Reject with feedback), compensation & salary structure editor, monthly payroll batch execution.
   - **Employee**: Personal shift check-in/out, leave application with balance quota checks, read-only salary breakdown, and PDF payslip download.
-- **1-Click Demo Quick-Access**: Instant pre-configured accounts for rapid demonstration & judging:
-  - 🛡️ **HR Admin**: `admin@dayflow.com` (Sarah Jenkins - VP of People & Culture)
-  - 👤 **Employee**: `employee@dayflow.com` (Alex Morgan - Senior Full Stack Engineer)
 - **Email Verification**: Verification banner and simulated activation workflow.
 
 ### ⏱️ 2. Attendance Tracking & Shift Punch Terminal
@@ -57,6 +57,7 @@ The platform runs on a dedicated MongoDB database (`dayflow_hrms`) with automate
 - **Official PDF Payslip Generator**: Generates formatted, audit-ready salary slips using `jspdf` and `jspdf-autotable`.
 
 ### 👤 5. Employee Profile & Encrypted Document Vault
+- **Profile Photo Upload**: Custom JPEG/PNG photo upload during sign up and instant update on profile page.
 - **Multi-Tab Profile View**:
   - `Job & Overview`: Designation, Department, Date of Joining, Manager, Bio.
   - `Salary Structure`: Structured earnings and deductions overview.
@@ -119,44 +120,6 @@ npm run fullstack
 ```bash
 npm run build
 ```
-
----
-
-## 📂 Project Structure
-
-```
-DayFlow/
-├── server/
-│   ├── db/
-│   │   ├── connection.ts         # MongoDB connection handler
-│   │   └── seed.ts               # Automated MongoDB seeder
-│   ├── models/                   # Mongoose schemas (Employee, Attendance, Leave, Payroll, Notification)
-│   ├── routes/                   # REST API endpoints (Auth, Employees, Attendance, Leaves, Payroll, Analytics)
-│   └── server.ts                 # Express production server
-├── src/
-│   ├── components/               # UI components (Attendance, Leaves, Payroll, Profile, Analytics)
-│   ├── context/                  # React Contexts (AuthContext, HRDataContext)
-│   ├── pages/                    # Application pages
-│   ├── services/
-│   │   ├── api.ts                # Full-stack MongoDB API client
-│   │   ├── pdfGenerator.ts       # jsPDF salary statement generator
-│   │   └── storage.ts            # Persistent client-side cache
-│   ├── types/                    # Domain TypeScript interfaces
-│   ├── App.tsx                   # Main routing & layout controller
-│   └── index.css                 # Odoo brand styling & glassmorphism
-├── .env                          # MongoDB configuration
-├── package.json
-└── vite.config.ts
-```
-
----
-
-## 🏆 Hackathon Demo Credentials
-
-| Role | Email | Password | Pre-configured Profile |
-| :--- | :--- | :--- | :--- |
-| **HR / Admin** | `admin@dayflow.com` | `admin123` | Sarah Jenkins (VP of People & Culture) |
-| **Employee** | `employee@dayflow.com` | `emp123` | Alex Morgan (Senior Full Stack Engineer) |
 
 ---
 

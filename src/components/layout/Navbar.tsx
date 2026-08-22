@@ -7,7 +7,6 @@ import {
   Moon, 
   UserCheck, 
   LogOut, 
-  RotateCcw, 
   CheckCircle2, 
   Clock, 
   Calendar, 
@@ -29,8 +28,8 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) => {
-  const { currentUser, isAdmin, loginAsDemo, logout, verifyEmail } = useAuth();
-  const { notifications, unreadNotifsCount, markNotificationAsRead, markAllNotificationsAsRead, resetDemoData, isMongoDBConnected } = useHRData();
+  const { currentUser, logout, verifyEmail } = useAuth();
+  const { notifications, unreadNotifsCount, markNotificationAsRead, markAllNotificationsAsRead, isMongoDBConnected } = useHRData();
 
   const [isDark, setIsDark] = useState<boolean>(() => {
     return document.documentElement.classList.contains('dark') ||
@@ -117,42 +116,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
           </div>
         </div>
 
-        {/* Center / Action Bar: Role Switcher Demo Pills & MongoDB Status */}
-        <div className="hidden md:flex items-center gap-3">
-          {/* MongoDB Status Indicator */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+        {/* Center: Live MongoDB Status */}
+        <div className="hidden sm:flex items-center">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
             <Database className="w-3.5 h-3.5" />
-            <span>MongoDB Live</span>
+            <span>MongoDB Active</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          </div>
-
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-            <button
-              onClick={() => loginAsDemo('ADMIN_HR')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                isAdmin
-                  ? 'bg-white dark:bg-slate-900 text-odoo-800 dark:text-odoo-300 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>Admin / HR</span>
-            </button>
-            <button
-              onClick={() => loginAsDemo('EMPLOYEE')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                !isAdmin
-                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Employee</span>
-            </button>
           </div>
         </div>
 
-        {/* Right Side: Tools & Profile */}
+        {/* Right Side: Theme, Notifications, Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Quick email verification trigger if unverified */}
           {currentUser && !currentUser.isEmailVerified && (
@@ -165,15 +138,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
               <span>Verify Email</span>
             </button>
           )}
-
-          {/* Reset Demo Data Button */}
-          <button
-            onClick={resetDemoData}
-            title="Reset to factory demo database"
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
 
           {/* Dark / Light Toggle */}
           <button
@@ -203,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
               <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-4 z-50 animate-slide-up">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-sm text-slate-900 dark:text-white">Notifications</h4>
+                    <h4 className="font-semibold text-sm text-slate-900 dark:white">Notifications</h4>
                     {unreadNotifsCount > 0 && (
                       <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400">
                         {unreadNotifsCount} new
@@ -278,7 +242,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
               />
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-semibold text-slate-900 dark:text-white leading-tight">
-                  {currentUser?.name || 'Guest'}
+                  {currentUser?.name || 'User'}
                 </p>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                   <span>{currentUser?.role === 'ADMIN_HR' ? 'HR Director' : 'Employee'}</span>
@@ -320,29 +284,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
                   <UserCheck className="w-4 h-4 text-slate-400" />
                   <span>My Profile & Documents</span>
                 </button>
-
-                <div className="sm:hidden border-t border-slate-100 dark:border-slate-800 my-1 pt-1">
-                  <button
-                    onClick={() => {
-                      loginAsDemo('ADMIN_HR');
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-left"
-                  >
-                    <Shield className="w-4 h-4 text-odoo-700" />
-                    <span>Switch to HR Admin</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      loginAsDemo('EMPLOYEE');
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-left"
-                  >
-                    <User className="w-4 h-4 text-teal-600" />
-                    <span>Switch to Employee</span>
-                  </button>
-                </div>
 
                 <div className="border-t border-slate-100 dark:border-slate-800 my-1 pt-1">
                   <button
