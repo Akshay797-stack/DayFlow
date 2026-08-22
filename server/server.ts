@@ -1,62 +1,57 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import { connectDB } from './db/connection';
+
+// Route Imports
+import authRoutes from './routes/auth';
+import employeeRoutes from './routes/employees';
+import attendanceRoutes from './routes/attendance';
+import leaveRoutes from './routes/leaves';
+import payrollRoutes from './routes/payroll';
+import notificationRoutes from './routes/notifications';
+import analyticsRoutes from './routes/analytics';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Health Check
+// API Health Check
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
-    system: 'Dayflow HRMS REST API Server',
+    system: 'Dayflow HRMS Production API Server',
+    database: 'MongoDB (dayflow_hrms)',
     version: '1.0.0',
     timestamp: new Date().toISOString()
   });
 });
 
-// Seed data reference for backend
-let employees = [
-  {
-    id: 'emp-001',
-    employeeId: 'EMP-0001',
-    name: 'Sarah Jenkins',
-    email: 'admin@dayflow.com',
-    role: 'ADMIN_HR',
-    designation: 'VP of People & Culture',
-    department: 'Human Resources'
-  },
-  {
-    id: 'emp-002',
-    employeeId: 'EMP-1002',
-    name: 'Alex Morgan',
-    email: 'employee@dayflow.com',
-    role: 'EMPLOYEE',
-    designation: 'Senior Full Stack Engineer',
-    department: 'Engineering'
-  }
-];
+// Mount Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/leaves', leaveRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
-// Routes
-app.get('/api/employees', (_req: Request, res: Response) => {
-  res.json({ success: true, data: employees });
-});
+// Connect to MongoDB and start server
+async function startServer() {
+  await connectDB();
 
-app.post('/api/auth/login', (req: Request, res: Response) => {
-  const { email } = req.body;
-  const user = employees.find(e => e.email.toLowerCase() === (email || '').toLowerCase());
-  if (!user) {
-    return res.status(401).json({ success: false, message: 'Invalid credentials' });
-  }
-  res.json({
-    success: true,
-    user,
-    token: `dayflow-jwt-${user.id}-${Date.now()}`
+  app.listen(PORT, () => {
+    console.log(`🚀 Dayflow HRMS Backend Server running on http://localhost:${PORT}`);
+    console.log(`📡 Connected to MongoDB: ${process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/dayflow_hrms'}`);
   });
-});
+}
 
-app.listen(PORT, () => {
-  console.log(`🚀 Dayflow HRMS Backend Server running on http://localhost:${PORT}`);
-});
+startServer();
+
+export default app;

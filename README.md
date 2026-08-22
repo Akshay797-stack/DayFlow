@@ -1,13 +1,27 @@
 # 🌟 Dayflow - Human Resource Management System (HRMS)
 
 > **"Every workday, perfectly aligned."**
-> A modern, full-stack enterprise Human Resource Management System built for the **Odoo Hackathon**.
+> A production-ready, full-stack enterprise Human Resource Management System with **MongoDB** persistence built for the **Odoo Hackathon**.
 
 ---
 
 ## 📖 Overview
 
-**Dayflow** digitizes and streamlines core HR operations end-to-end, providing a unified workspace for both **HR Administrators** and **Employees**. The system features role-based access, interactive shift punch terminals, automated leave approval workflows, employee profile & document vault management, verified PDF payroll generation, and executive analytics.
+**Dayflow** digitizes and streamlines core HR operations end-to-end, providing a unified workspace for both **HR Administrators** and **Employees**. Backed by **MongoDB** and **Express.js REST APIs**, the system provides robust data persistence, role-based security, interactive shift punch terminals, automated leave approval workflows, employee profile & document vault management, verified PDF payroll generation, and executive analytics.
+
+---
+
+## 🗄️ MongoDB Production Database Architecture
+
+The platform runs on a dedicated MongoDB database (`dayflow_hrms`) with automated seeding and indexed schemas:
+
+| Collection | Model / Schema | Description |
+| :--- | :--- | :--- |
+| `employees` | `EmployeeModel` | Enterprise personnel, salary structures, leave quotas, document vaults, emergency contacts |
+| `attendances` | `AttendanceModel` | Daily and weekly punch logs with check-in/out timestamps, hours calculated, and status |
+| `leaves` | `LeaveModel` | Time-off applications, approval states (`PENDING`, `APPROVED`, `REJECTED`), and reviewer feedback |
+| `payrolls` | `PayrollModel` | Monthly salary disbursements, structured earnings, statutory withholdings (PF & Tax) |
+| `notifications`| `NotificationModel` | In-app alerts for leave approvals, attendance updates, and payroll disbursements |
 
 ---
 
@@ -61,51 +75,50 @@
 
 | Layer | Technology |
 | :--- | :--- |
+| **Database** | MongoDB + Mongoose ODM (`mongodb://127.0.0.1:27017/dayflow_hrms`) |
+| **Backend API** | Node.js + Express.js REST API |
 | **Frontend Framework** | React 18 + TypeScript + Vite |
 | **Styling & Theme** | Tailwind CSS v4 + Bespoke Odoo Design System (Light/Dark mode) |
 | **Icons & UI** | Lucide React |
 | **Data Visualizations** | Recharts |
 | **PDF Generation** | jsPDF + jsPDF-AutoTable |
 | **Micro-Interactions** | Canvas-Confetti |
-| **Backend API** | Node.js + Express REST API |
-| **State & Persistence** | Reactive Context API + Persistent LocalStorage Engine (with Seed Data) |
+| **State & Synchronization**| Fullstack reactive Context API with MongoDB sync |
 
 ---
 
 ## 🚀 Quick Start Guide
 
 ### Prerequisites
-- Node.js (v18+ recommended)
-- npm (v9+)
+- **Node.js** (v18+ recommended)
+- **MongoDB** (Running on default port `27017`)
 
-### Installation & Running Locally
+### 1. Environment Configuration
+Create a `.env` file (or use default `.env`):
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/dayflow_hrms
+JWT_SECRET=dayflow_hrms_super_secure_jwt_secret_key_2026
+```
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Akshay797-stack/DayFlow.git
-   cd DayFlow
-   ```
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-2. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
+### 3. Run Full-Stack (MongoDB Backend + Vite Frontend)
+```bash
+npm run fullstack
+```
+- **Frontend App**: [http://127.0.0.1:5173](http://127.0.0.1:5173)
+- **Backend API & MongoDB**: [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
-3. **Start the Development Server**:
-   ```bash
-   npm run dev
-   ```
-   Open [http://127.0.0.1:5173](http://127.0.0.1:5173) in your browser.
+*(The database will automatically seed with full enterprise records on first run)*.
 
-4. **Run the Full-Stack Application (Frontend + Express API Server)**:
-   ```bash
-   npm run fullstack
-   ```
-
-5. **Build for Production**:
-   ```bash
-   npm run build
-   ```
+### 4. Build for Production
+```bash
+npm run build
+```
 
 ---
 
@@ -114,32 +127,25 @@
 ```
 DayFlow/
 ├── server/
-│   └── server.ts                 # Express REST API server
+│   ├── db/
+│   │   ├── connection.ts         # MongoDB connection handler
+│   │   └── seed.ts               # Automated MongoDB seeder
+│   ├── models/                   # Mongoose schemas (Employee, Attendance, Leave, Payroll, Notification)
+│   ├── routes/                   # REST API endpoints (Auth, Employees, Attendance, Leaves, Payroll, Analytics)
+│   └── server.ts                 # Express production server
 ├── src/
-│   ├── components/
-│   │   ├── analytics/            # HR Analytics charts (Recharts)
-│   │   ├── attendance/           # CheckInWidget, AttendanceTable, WeeklyCalendar
-│   │   ├── auth/                 # LoginModal, RegisterModal
-│   │   ├── common/               # Badge, Modal, StatCard, Toast
-│   │   ├── layout/               # Navbar, Sidebar
-│   │   ├── leaves/               # ApplyLeaveModal, LeaveBalanceCards, LeaveRequestTable
-│   │   ├── payroll/              # PayslipModal, PayrollTable, SalaryStructureModal
-│   │   └── profile/              # ProfileView, EditProfileModal, DocumentManager
-│   ├── context/
-│   │   ├── AuthContext.tsx       # Auth state, role switching & session
-│   │   └── HRDataContext.tsx     # Reactive HR data store & CRUD operations
-│   ├── pages/                    # Dashboard, Employees, Attendance, Leaves, Payroll, Profile, Analytics
+│   ├── components/               # UI components (Attendance, Leaves, Payroll, Profile, Analytics)
+│   ├── context/                  # React Contexts (AuthContext, HRDataContext)
+│   ├── pages/                    # Application pages
 │   ├── services/
-│   │   ├── mockData.ts           # Rich corporate seed dataset
+│   │   ├── api.ts                # Full-stack MongoDB API client
 │   │   ├── pdfGenerator.ts       # jsPDF salary statement generator
-│   │   └── storage.ts            # Persistence engine
-│   ├── types/
-│   │   └── index.ts              # TypeScript domain interfaces
-│   ├── App.tsx                   # Main app & route controller
-│   ├── index.css                 # Custom styling & glassmorphism system
-│   └── main.tsx                  # Application entry point
+│   │   └── storage.ts            # Persistent client-side cache
+│   ├── types/                    # Domain TypeScript interfaces
+│   ├── App.tsx                   # Main routing & layout controller
+│   └── index.css                 # Odoo brand styling & glassmorphism
+├── .env                          # MongoDB configuration
 ├── package.json
-├── tailwind.config.js
 └── vite.config.ts
 ```
 
@@ -152,9 +158,14 @@ DayFlow/
 | **HR / Admin** | `admin@dayflow.com` | `admin123` | Sarah Jenkins (VP of People & Culture) |
 | **Employee** | `employee@dayflow.com` | `emp123` | Alex Morgan (Senior Full Stack Engineer) |
 
-*(You can also use the 1-click Demo buttons at the top of the app or on the landing page for instant switching)*.
+---
+
+## 👤 Author & Contributor
+- **Name**: Akshay Chandar
+- **GitHub**: [@Akshay797-stack](https://github.com/Akshay797-stack)
+- **Email**: `akshaychandarm.24csd@kongu.edu`
 
 ---
 
 ## 📜 License
-Developed for the **Odoo Hackathon**. Distributed under the MIT License.
+Distributed under the MIT License for the **Odoo Hackathon**.

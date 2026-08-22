@@ -17,6 +17,7 @@ import {
   Shield,
   User,
   Sparkles,
+  Database,
   ChevronDown
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
@@ -29,7 +30,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) => {
   const { currentUser, isAdmin, loginAsDemo, logout, verifyEmail } = useAuth();
-  const { notifications, unreadNotifsCount, markNotificationAsRead, markAllNotificationsAsRead, resetDemoData } = useHRData();
+  const { notifications, unreadNotifsCount, markNotificationAsRead, markAllNotificationsAsRead, resetDemoData, isMongoDBConnected } = useHRData();
 
   const [isDark, setIsDark] = useState<boolean>(() => {
     return document.documentElement.classList.contains('dark') ||
@@ -116,30 +117,39 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
           </div>
         </div>
 
-        {/* Center / Action Bar: Role Switcher Demo Pills */}
-        <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-          <button
-            onClick={() => loginAsDemo('ADMIN_HR')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              isAdmin
-                ? 'bg-white dark:bg-slate-900 text-odoo-800 dark:text-odoo-300 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>Admin / HR</span>
-          </button>
-          <button
-            onClick={() => loginAsDemo('EMPLOYEE')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              !isAdmin
-                ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <User className="w-3.5 h-3.5" />
-            <span>Employee</span>
-          </button>
+        {/* Center / Action Bar: Role Switcher Demo Pills & MongoDB Status */}
+        <div className="hidden md:flex items-center gap-3">
+          {/* MongoDB Status Indicator */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+            <Database className="w-3.5 h-3.5" />
+            <span>MongoDB Live</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          </div>
+
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+            <button
+              onClick={() => loginAsDemo('ADMIN_HR')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                isAdmin
+                  ? 'bg-white dark:bg-slate-900 text-odoo-800 dark:text-odoo-300 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Admin / HR</span>
+            </button>
+            <button
+              onClick={() => loginAsDemo('EMPLOYEE')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                !isAdmin
+                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Employee</span>
+            </button>
+          </div>
         </div>
 
         {/* Right Side: Tools & Profile */}

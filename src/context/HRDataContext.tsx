@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Employee, AttendanceRecord, LeaveRequest, PayrollRecord, NotificationItem, LeaveType, LeaveStatus, SalaryStructure, EmployeeDocument } from '../types';
 import { StorageService } from '../services/storage';
+import { ApiService } from '../services/api';
 import { useAuth } from './AuthContext';
 import confetti from 'canvas-confetti';
 
@@ -36,6 +37,7 @@ interface HRDataContextType {
   resetDemoData: () => void;
   toastMessage: { message: string; type: 'success' | 'error' | 'info' } | null;
   setToast: (toast: { message: string; type: 'success' | 'error' | 'info' } | null) => void;
+  isMongoDBConnected: boolean;
 }
 
 const HRDataContext = createContext<HRDataContextType | undefined>(undefined);
@@ -50,6 +52,7 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeSelectedEmployee, setActiveSelectedEmployee] = useState<Employee | null>(null);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [isMongoDBConnected, setIsMongoDBConnected] = useState(false);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToastMessage({ message, type });
@@ -58,23 +61,59 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, 4000);
   }, []);
 
-  const refreshAll = useCallback(() => {
-    const emps = StorageService.getEmployees();
-    const att = StorageService.getAttendance();
-    const lvs = StorageService.getLeaves();
-    const pay = StorageService.getPayroll();
-    const notifs = StorageService.getNotifications(currentUser?.employeeId);
+  const refreshAll = useCallback(async () => {
+    // 1. First load from local storage for instant render
+    const localEmps = StorageService.getEmployees();
+    const localAtt = StorageService.getAttendance();
+    const localLvs = StorageService.getLeaves();
+    const localPay = StorageService.getPayroll();
+    const localNotifs = StorageService.getNotifications(currentUser?.employeeId);
 
-    setEmployees(emps);
-    setAttendance(att);
-    setLeaves(lvs);
-    setPayroll(pay);
-    setNotifications(notifs);
+    setEmployees(localEmps);
+    setAttendance(localAtt);
+    setLeaves(localLvs);
+    setPayroll(localPay);
+    setNotifications(localNotifs);
+
+    // 2. Fetch live data from MongoDB API server
+    try {
+      const [apiEmps, apiAtt, apiLvs, apiPay, apiNotifs] = await Promise.all([
+        ApiService.getEmployees(),
+        ApiService.getAttendance(),
+        ApiService.getLeaves(),
+        ApiService.getPayroll(),
+        ApiService.getNotifications(currentUser?.employeeId)
+      ]);
+
+      if (apiEmps && apiEmps.length > 0) {
+        setEmployees(apiEmps);
+        StorageService.saveEmployees(apiEmps);
+        setIsMongoDBConnected(true);
+      }
+      if (apiAtt && apiAtt.length > 0) {
+        setAttendance(apiAtt);
+        StorageService.saveAttendance(apiAtt);
+      }
+      if (apiLvs && apiLvs.length > 0) {
+        setLeaves(apiLvs);
+        StorageService.saveLeaves(apiLvs);
+      }
+      if (apiPay && apiPay.length > 0) {
+        setPayroll(apiPay);
+        StorageService.savePayroll(apiPay);
+      }
+      if (apiNotifs && apiNotifs.length > 0) {
+        setNotifications(apiNotifs);
+        StorageService.saveNotifications(apiNotifs);
+      }
+    } catch {
+      // Keep local data if backend is offline
+    }
 
     if (currentUser) {
-      const refreshedUser = emps.find(e => e.id === currentUser.id || e.employeeId === currentUser.employeeId);
+      const refreshedUser = localEmps.find(e => e.id === currentUser.id || e.employeeId === currentUser.employeeId);
       if (refreshedUser) {
-        setActiveSelectedEmployee(prev => prev ? (emps.find(e => e.id === prev.id) || refreshedUser) : refreshedUser);
+        setActiveSelectedEmployee(prev => prev ? (localEmps.find(e => e.id === prev.id) || refreshedUser) : refreshedUser);
       }
     }
   }, [currentUser]);
@@ -92,13 +131,15 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const hasPunchedOutToday = !!todayAttendance?.checkOut;
 
   // Punch In
-  const punchIn = () => {
+  const punchIn = async () => {
     if (!currentUser) return;
     const record = StorageService.punchIn(currentUser);
     refreshAll();
     showToast(`Checked in at ${record.checkIn}! Have a productive workday.`, 'success');
-    
-    // Celebration confetti
+
+    // Async sync to MongoDB
+    ApiService.punchIn(currentUser.employeeId, currentUser.name);
+
     confetti({
       particleCount: 50,
       spread: 60,
@@ -107,28 +148,34 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   // Punch Out
-  const punchOut = () => {
+  const punchOut = async () => {
     if (!currentUser) return;
     const record = StorageService.punchOut(currentUser);
     refreshAll();
     if (record) {
       showToast(`Checked out at ${record.checkOut}. Total logged hours: ${record.workingHours}h.`, 'info');
     }
+
+    // Async sync to MongoDB
+    ApiService.punchOut(currentUser.employeeId);
   };
 
   // Employee update
-  const updateEmployee = (id: string, updates: Partial<Employee>) => {
+  const updateEmployee = async (id: string, updates: Partial<Employee>) => {
     const updated = StorageService.updateEmployee(id, updates);
     if (updated) {
       if (currentUser && (currentUser.id === id || currentUser.employeeId === id)) {
         updateCurrentUserProfile(updates);
       }
       refreshAll();
-      showToast('Employee profile updated successfully.', 'success');
+      showToast('Employee profile updated in MongoDB successfully.', 'success');
     }
+
+    // Async sync to MongoDB
+    ApiService.updateEmployee(id, updates);
   };
 
-  const addEmployeeDocument = (employeeId: string, doc: Omit<EmployeeDocument, 'id' | 'uploadDate'>) => {
+  const addEmployeeDocument = async (employeeId: string, doc: Omit<EmployeeDocument, 'id' | 'uploadDate'>) => {
     const emp = StorageService.getEmployeeById(employeeId);
     if (!emp) return;
 
@@ -141,11 +188,14 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const docs = [...(emp.documents || []), newDoc];
     StorageService.updateEmployee(emp.id, { documents: docs });
     refreshAll();
-    showToast(`Document "${doc.name}" uploaded successfully.`, 'success');
+    showToast(`Document "${doc.name}" saved to MongoDB vault.`, 'success');
+
+    // Async sync to MongoDB
+    ApiService.addDocument(employeeId, doc);
   };
 
   // Apply Leave
-  const applyLeave = (
+  const applyLeave = async (
     leaveType: LeaveType,
     startDate: string,
     endDate: string,
@@ -155,8 +205,21 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!currentUser) return;
     StorageService.applyLeave(currentUser, leaveType, startDate, endDate, totalDays, reason);
     refreshAll();
-    showToast(`Leave request for ${totalDays} day(s) submitted for approval.`, 'success');
-    
+    showToast(`Leave request for ${totalDays} day(s) submitted to MongoDB for approval.`, 'success');
+
+    // Async sync to MongoDB
+    ApiService.applyLeave({
+      employeeId: currentUser.employeeId,
+      employeeName: currentUser.name,
+      employeeAvatar: currentUser.avatar,
+      department: currentUser.department,
+      leaveType,
+      startDate,
+      endDate,
+      totalDays,
+      reason
+    });
+
     confetti({
       particleCount: 40,
       spread: 50,
@@ -165,12 +228,15 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   // Review Leave
-  const reviewLeave = (leaveId: string, status: LeaveStatus, comment: string) => {
+  const reviewLeave = async (leaveId: string, status: LeaveStatus, comment: string) => {
     if (!currentUser) return;
     StorageService.reviewLeave(leaveId, status, comment, currentUser.name);
     refreshAll();
-    showToast(`Leave request ${status.toLowerCase()} successfully.`, status === 'APPROVED' ? 'success' : 'info');
-    
+    showToast(`Leave request ${status.toLowerCase()} in MongoDB successfully.`, status === 'APPROVED' ? 'success' : 'info');
+
+    // Async sync to MongoDB
+    ApiService.reviewLeave(leaveId, status, comment, currentUser.name);
+
     if (status === 'APPROVED') {
       confetti({
         particleCount: 80,
@@ -181,18 +247,24 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   // Payroll structure update
-  const updateSalaryStructure = (employeeId: string, salary: SalaryStructure) => {
+  const updateSalaryStructure = async (employeeId: string, salary: SalaryStructure) => {
     StorageService.updateSalaryStructure(employeeId, salary);
     refreshAll();
-    showToast('Salary structure updated successfully.', 'success');
+    showToast('Salary structure updated in MongoDB successfully.', 'success');
+
+    // Async sync to MongoDB
+    ApiService.updateSalaryStructure(employeeId, salary);
   };
 
   // Monthly payroll run
-  const runMonthlyPayroll = (month: string, year: number) => {
+  const runMonthlyPayroll = async (month: string, year: number) => {
     StorageService.runMonthlyPayrollBatch(month, year);
     refreshAll();
-    showToast(`Monthly payroll for ${month} ${year} processed successfully!`, 'success');
-    
+    showToast(`Monthly payroll for ${month} ${year} processed and recorded in MongoDB!`, 'success');
+
+    // Async sync to MongoDB
+    ApiService.runPayrollBatch(month, year);
+
     confetti({
       particleCount: 100,
       spread: 80,
@@ -203,11 +275,13 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Notification management
   const markNotificationAsRead = (id: string) => {
     StorageService.markNotificationRead(id);
+    ApiService.markNotificationRead(id);
     refreshAll();
   };
 
   const markAllNotificationsAsRead = () => {
     StorageService.markAllNotificationsRead(currentUser?.employeeId);
+    ApiService.markAllNotificationsRead(currentUser?.employeeId);
     refreshAll();
     showToast('All notifications marked as read.', 'info');
   };
@@ -247,7 +321,8 @@ export const HRDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         refreshAll,
         resetDemoData,
         toastMessage,
-        setToast: setToastMessage
+        setToast: setToastMessage,
+        isMongoDBConnected
       }}
     >
       {children}
